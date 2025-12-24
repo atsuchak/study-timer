@@ -20,42 +20,37 @@ const mainToggle = document.getElementById('main-toggle');
 const modeLabel = document.getElementById('mode-label');
 const settingsArea = document.getElementById('settings-area');
 
-// Move this to the top of your script with other variables
 let alarmInterval = null;
 
 function playPremiumAlarm() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     let count = 0;
 
-    // Clear any existing alarm before starting a new one
     if (alarmInterval) clearInterval(alarmInterval);
 
     alarmInterval = setInterval(() => {
         const now = ctx.currentTime;
+        
         playNote(880, now, ctx);
-        playNote(659.25, now + 0.2, ctx);
 
         count++;
-        // 20 cycles * 0.5s = 10 Seconds
-        if (count >= 20) {
+        if (count >= 5) {
             clearInterval(alarmInterval);
             alarmInterval = null;
         }
-    }, 500);
+    }, 1000); 
 }
 
 function reset() {
-    // 1. Stop the timer interval
     clearInterval(state.intervals.main);
 
-    // 2. Stop the alarm sound immediately if it's ringing
     if (alarmInterval) {
         clearInterval(alarmInterval);
         alarmInterval = null;
     }
 
     state.isRunning = false;
-    state.pomodoro.isFinished = false; // Reset the red color
+    state.pomodoro.isFinished = false; 
 
     if (state.currentTab === 'pomodoro') {
         state.pomodoro.isFocus = true;
@@ -89,7 +84,6 @@ function format(seconds) {
 function switchTab(tab) {
     state.currentTab = tab;
 
-    // Update tab button styles
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.remove('tab-active', 'text-white');
         btn.classList.add('text-gray-500');
@@ -100,7 +94,6 @@ function switchTab(tab) {
         }
     });
 
-    // Toggle Start and Reset button visibility
     const startBtn = document.getElementById('main-toggle');
     const resetBtn = document.getElementById('main-reset');
 
@@ -159,11 +152,10 @@ function updateUI() {
         label = "Stopwatch";
         settingsArea.innerHTML = '';
 
-        // FIX: If not running and seconds > 0, show paused (yellow)
         if (!state.isRunning && state.stopwatch.seconds > 0) {
             statusClass = "timer-paused";
         } else {
-            statusClass = "timer-focus"; // Cyan when running or at 0
+            statusClass = "timer-focus"; 
         }
 
     } else {
@@ -176,7 +168,6 @@ function updateUI() {
             const period = h >= 12 ? 'PM' : 'AM';
             const displayH = h % 12 || 12;
 
-            // Inside updateUI() -> Clock else block
             const ampmSize = state.fullscreen ? "3vw" : "0.85rem";
             const ampmRight = state.fullscreen ? "-4.5vw" : "-2.3rem";
             const ampmTop = state.fullscreen ? "1vw" : "-0.4rem";
@@ -224,7 +215,6 @@ function updateUI() {
 
         fsDisplay.className = `font-timer font-bold leading-none transition-all duration-300 ${statusClass}`;
 
-        // Slightly smaller digits to give the AM/PM more "breathing room"
         fsDisplay.style.fontSize = hasHours ? "16vw" : "24vw";
         fsDisplay.innerHTML = timeHtml;
         fsLabel.textContent = label;
@@ -263,7 +253,6 @@ function attachInputListeners() {
         });
     }
 
-    // NEW: Handle the clock format change
     if (cInput) {
         cInput.addEventListener('change', (e) => {
             state.clockFormat12h = e.target.checked;
@@ -297,15 +286,12 @@ function toggle() {
 
         state.intervals.main = setInterval(() => {
             if (state.currentTab === 'pomodoro') {
-                // 1. Check if we are already at zero
                 if (state.pomodoro.remaining <= 0) {
                     if (state.pomodoro.autoRepeat) {
-                        // REPEAT MODE: Switch and Reset
                         playBeep('tung');
                         state.pomodoro.isFocus = !state.pomodoro.isFocus;
                         state.pomodoro.remaining = (state.pomodoro.isFocus ? state.pomodoro.focus : state.pomodoro.break) * 60;
                     } else {
-                        // NON-REPEAT MODE: Stop and Alarm
                         state.isRunning = false;
                         state.pomodoro.isFinished = true;
                         state.pomodoro.remaining = 0;
@@ -313,7 +299,6 @@ function toggle() {
                         playPremiumAlarm();
                     }
                 } else {
-                    // 2. Only subtract if we haven't reached zero yet
                     state.pomodoro.remaining--;
                 }
             } else if (state.currentTab === 'stopwatch') {
@@ -364,49 +349,47 @@ async function toggleFS() {
 
 
 
-// /**
-//  * TEST UTILITY: Fast Test Button
-//  * Delete this entire function and its call when finished.
-//  */
-// function enableFastTestMode() {
-//     // 1. Create the button element
-//     const testBtn = document.createElement('button');
-//     testBtn.id = "temp-test-btn";
-//     testBtn.innerHTML = "TEST 5S";
+/**
+ * TEST UTILITY: Fast Test Button
+ * Delete this entire function and its call when finished.
+ */
+function enableFastTestMode() {
+    // 1. Create the button element
+    const testBtn = document.createElement('button');
+    testBtn.id = "temp-test-btn";
+    testBtn.innerHTML = "TEST 5S";
 
-//     // 2. Style it to float in the corner so it doesn't mess up your UI
-//     Object.assign(testBtn.style, {
-//         position: 'fixed',
-//         bottom: '20px',
-//         left: '20px',
-//         padding: '10px 15px',
-//         background: 'rgba(239, 68, 68, 0.2)',
-//         color: '#ef4444',
-//         border: '1px solid #ef4444',
-//         borderRadius: '8px',
-//         fontSize: '10px',
-//         fontWeight: 'bold',
-//         cursor: 'pointer',
-//         zIndex: '9999'
-//     });
+    // 2. Style it to float in the corner so it doesn't mess up your UI
+    Object.assign(testBtn.style, {
+        position: 'fixed',
+        bottom: '20px',
+        left: '20px',
+        padding: '10px 15px',
+        background: 'rgba(239, 68, 68, 0.2)',
+        color: '#ef4444',
+        border: '1px solid #ef4444',
+        borderRadius: '8px',
+        fontSize: '10px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        zIndex: '9999'
+    });
 
-//     // 3. Add the logic
-//     testBtn.onclick = () => {
-//         if (state.currentTab === 'pomodoro') {
-//             state.pomodoro.remaining = 5;
-//             state.pomodoro.isFinished = false;
-//             updateUI();
-//             console.log("Test Mode: Timer set to 5 seconds");
-//         } else {
-//             alert("Please switch to Pomodoro tab to test!");
-//         }
-//     };
+    // 3. Add the logic
+    testBtn.onclick = () => {
+        if (state.currentTab === 'pomodoro') {
+            state.pomodoro.remaining = 5;
+            state.pomodoro.isFinished = false;
+            updateUI();
+            console.log("Test Mode: Timer set to 5 seconds");
+        } else {
+            alert("Please switch to Pomodoro tab to test!");
+        }
+    };
 
-//     document.body.appendChild(testBtn);
-// }
-
-// // CALL THE FUNCTION HERE
-// enableFastTestMode();
+    document.body.appendChild(testBtn);
+}
+enableFastTestMode();
 
 
 
